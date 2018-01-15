@@ -78,7 +78,7 @@ sudo veracrypt --text \
   --password veracrypt \
   --pim 2000 \
   --keyfiles '' \
-  --fs-options rw,noatime,nodiratime
+  --fs-options rw,noatime,nodiratime \
   --non-interactive
 SCRIPT
 
