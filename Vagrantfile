@@ -18,28 +18,18 @@ fi
 SCRIPT
 
 $enc_zfs = <<SCRIPT
-sudo DEBIAN_FRONTEND=noninteractive apt-get -y install autotools automake libtool b1g-dev attr uuid-dev libblkid-dev libattr1-dev autoconf build-essential libssl-dev
+# install tools
+sudo DEBIAN_FRONTEND=noninteractive apt-get -y install zfsutils-linux
 
-cd /tmp
-git clone https://github.com/zfsonlinux/spl
-git clone https://github.com/zfsonlinux/zfs
+# make encrypted luks
+echo cryptoluks | sudo cryptsetup -v --cipher aes-xts-plain64 --hash sha512 --key-file - --use-urandom --iter-time 5000 --batch-mode luksFormat /dev/sdc
+echo cryptoluks | sudo cryptsetup -v --key-file - open --type luks /dev/sdc data
 
-cd spl
-sudo ./autogen.sh
-sudo ./configure
-sudo make -j 3
-sudo make install
-echo 'search extra updates ubuntu built-in' | sudo tee /etc/depmod.d/ubuntu.conf
-sudo depmod -a
+# now go for zfs
+zpool create -m /data play /dev/mapper/data
 
-cd ../zfs
-sudo ./autogen.sh
-sudo ./configure
-sudo make -j3
-sudo make install
-sudo ldconfig -v
-
-sudo modprobe zfs
+# and enable compression
+zfs set compression=lz4 play
 SCRIPT
 
 $enc_vera = <<SCRIPT
@@ -100,23 +90,23 @@ Vagrant.configure("2") do |config|
   config.vm.box_check_update = false
 
   # define boxes
-####  # Encrypted zfs + lxd
-####  config.vm.define "enc-zfs" do |z|
-####    z.vm.provision "shell", inline: $common
-####    z.vm.provision "shell", inline: $enc_zfs
-####    z.vm.hostname = "encryption-zfs-lxd"
-####    z.vm.provider :virtualbox do |vb|
-####      vb.memory = "512"
-####      vb.cpus = "1"
-####      
-####      # attach a second disk
-####      disk = './enc-zfs-disk2.vdi'
-####      unless File.exist?(disk)
-####        vb.customize ['createhd', '--filename', disk, '--format', 'VDI', '--size', 4 * 1024]
-####      end
-####      vb.customize ['storageattach', :id, '--storagectl', 'SCSI Controller', '--port', 6, '--device', 0, '--type', 'hdd', '--medium', disk]
-####    end
-####  end
+  # Encrypted zfs + lxd
+  config.vm.define "enc-zfs" do |z|
+    z.vm.provision "shell", inline: $common
+    z.vm.provision "shell", inline: $enc_zfs
+    z.vm.hostname = "encryption-zfs-lxd"
+    z.vm.provider :virtualbox do |vb|
+      vb.memory = "512"
+      vb.cpus = "1"
+      
+      # attach a second disk
+      disk = './enc-zfs-disk2.vdi'
+      unless File.exist?(disk)
+        vb.customize ['createhd', '--filename', disk, '--format', 'VDI', '--size', 4 * 1024]
+      end
+      vb.customize ['storageattach', :id, '--storagectl', 'SCSI Controller', '--port', 6, '--device', 0, '--type', 'hdd', '--medium', disk]
+    end
+  end
 
   # Veracrypt
   config.vm.define "enc-vera" do |v|
