@@ -2,16 +2,23 @@
 # vi: set ft=ruby :
 
 $common = <<SCRIPT
-echo 'Provisioning ...'
 #sudo sed -i 's,deb .*archive.ubuntu,deb http://bg.archive.ubuntu,g' /etc/apt/sources.list
+
+# improve somewhat the install process
 echo 'APT::Install-Recommends "false";' | sudo tee /etc/apt/apt.conf.d/99no-recommends
 echo 'APT::Install-Suggests "false";' | sudo tee -a /etc/apt/apt.conf.d/99no-recommends
 echo 'APT::Get::Install-Suggests "false";' | sudo tee -a /etc/apt/apt.conf.d/99no-recommends
 echo 'APT::Get::Install-Recommends "false";' | sudo tee -a /etc/apt/apt.conf.d/99no-recommends
+
+# let's get current
 sudo apt-get update
 sudo DEBIAN_FRONTEND=noninteractive apt-get -y dist-upgrade
-sudo DEBIAN_FRONTEND=noninteractive apt-get -y autoremove --purge squashfs-tools ubuntu-core-launcher
+
+# remove some
+sudo DEBIAN_FRONTEND=noninteractive apt-get -y autoremove --purge squashfs-tools ubuntu-core-launcher snapd
 sudo rm -rf /var/lib/lxd
+
+# make base playground dir
 if [ ! -d /data ] ; then
   sudo mkdir /data
 fi
@@ -73,8 +80,13 @@ sudo veracrypt --text \
 SCRIPT
 
 $enc_luks = <<SCRIPT
+# setup header
 echo cryptoluks | sudo cryptsetup -v --cipher aes-xts-plain64 --hash sha512 --key-file - --use-urandom --iter-time 5000 --batch-mode luksFormat /dev/sdc
+
+# open device and create node
 echo cryptoluks | sudo cryptsetup -v --key-file - open --type luks /dev/sdc data
+
+# format with fs and mount
 sudo mkfs.ext4 /dev/mapper/data
 sudo mount -o rw,noatime,nodiratime /dev/mapper/data /data
 SCRIPT
