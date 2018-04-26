@@ -108,6 +108,7 @@ Vagrant.configure("2") do |config|
     z.vm.provision "shell", inline: $enc_zfs
     z.vm.hostname = "encryption-zfs-lxd"
     z.vm.provider :virtualbox do |vb|
+      vb.linked_clone = true
       vb.memory = "512"
       vb.cpus = "1"
       
@@ -116,7 +117,7 @@ Vagrant.configure("2") do |config|
       unless File.exist?(disk)
         vb.customize ['createhd', '--filename', disk, '--format', 'VDI', '--size', 4 * 1024]
       end
-      vb.customize ['storageattach', :id, '--storagectl', 'SCSI Controller', '--port', 6, '--device', 0, '--type', 'hdd', '--medium', disk]
+      vb.customize ['storageattach', :id, '--storagectl', 'SCSI', '--port', 6, '--device', 0, '--type', 'hdd', '--medium', disk]
     end
   end
 
@@ -126,6 +127,7 @@ Vagrant.configure("2") do |config|
     v.vm.provision "shell", inline: $enc_vera
     v.vm.hostname = "encryption-vera"
     v.vm.provider :virtualbox do |vb|
+      vb.linked_clone = true
       vb.memory = "512"
       vb.cpus = "1"
 
@@ -134,7 +136,7 @@ Vagrant.configure("2") do |config|
       unless File.exist?(disk)
         vb.customize ['createhd', '--filename', disk, '--format', 'VDI', '--size', 4 * 1024]
       end
-      vb.customize ['storageattach', :id, '--storagectl', 'SCSI Controller', '--port', 6, '--device', 0, '--type', 'hdd', '--medium', disk]
+      vb.customize ['storageattach', :id, '--storagectl', 'SCSI', '--port', 6, '--device', 0, '--type', 'hdd', '--medium', disk]
     end
   end
  
@@ -144,6 +146,7 @@ Vagrant.configure("2") do |config|
     l.vm.provision "shell", inline: $enc_luks
     l.vm.hostname = "encryption-luks"
     l.vm.provider :virtualbox do |vb|
+      vb.linked_clone = true
       vb.memory = "512"
       vb.cpus = "1"
       
@@ -152,7 +155,7 @@ Vagrant.configure("2") do |config|
       unless File.exist?(disk)
         vb.customize ['createhd', '--filename', disk, '--format', 'VDI', '--size', 4 * 1024]
       end
-      vb.customize ['storageattach', :id, '--storagectl', 'SCSI Controller', '--port', 6, '--device', 0, '--type', 'hdd', '--medium', disk]
+      vb.customize ['storageattach', :id, '--storagectl', 'SCSI', '--port', 6, '--device', 0, '--type', 'hdd', '--medium', disk]
     end
   end
 end
